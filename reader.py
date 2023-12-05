@@ -7,7 +7,7 @@ import time
 
 ser = serial.Serial(
     port=sys.argv[1],
-    baudrate=19200,
+    baudrate=115200,
     timeout=0)
 
 print("connected to: " + ser.portstr)
@@ -15,8 +15,11 @@ start = round(time.time() * 1000)
 
 with open(str(time.time()) + '.csv', 'w') as f:
     writer = csv.writer(f, delimiter=',', lineterminator='\n')
-    writer.writerow(['time', 'reading', 'reading2'])
+    writer.writerow(['time', 'reading'])
     last = round(time.time() * 1000)
+
+    old_r0 = -1
+
     while True:
         try:
             mills = round(time.time() * 1000)
@@ -29,9 +32,12 @@ with open(str(time.time()) + '.csv', 'w') as f:
                     val = (val.decode() + temp.decode()).encode()
             val = val.decode()[:-2]
             res = val.split(';')
-            towrite = [start + int(res[0]), res[1], res[2]]
-            print(towrite)
-            writer.writerow(towrite)
+
+            if int(float(res[0])) != old_r0:
+                old_r0 = int(float(res[0]))
+                towrite = [start + int(float(res[0])), float(res[1]) if float(res[1]) >= 0 else 0]
+                print(towrite)
+                writer.writerow(towrite)
         except UnicodeDecodeError as e:
             pass
 
